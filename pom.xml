@@ -87,6 +87,7 @@
         <!-- some support module -->
         <module>plugin-rdbms-util</module>
         <module>plugin-unstructured-storage-util</module>
+        <module>logrecorder</module>
         <!-- developing module -->
         <module>hbasewriter</module>
   </modules>

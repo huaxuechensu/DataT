@@ -81,7 +81,13 @@
             </includes>
             <outputDirectory>datax</outputDirectory>
         </fileSet>
-
+        <fileSet>
+            <directory>logrecorder/target/datax/</directory>
+            <includes>
+                <include>**/*.*</include>
+            </includes>
+            <outputDirectory>datax</outputDirectory>
+        </fileSet>
        <!-- <fileSet>
             <directory>odpsreader/target/datax/</directory>
             <includes>
