@@ -39,6 +39,11 @@ DataX本身作为数据同步框架，将不同数据源的同步抽象为从源
     ``` shell
     $ cd  {DataX_source_code_home}
     $ mvn -U clean package assembly:assembly -Dmaven.test.skip=true
+    注：
+        可通过下面代码打包指定的模块
+        mvn -U clean package assembly:assembly -Dmaven.test.skip=true -pl common,plugin-rdbms-util,logrecorder
+
+    
     ```
     
     打包成功，日志显示如下：

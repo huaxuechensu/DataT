@@ -39,13 +39,13 @@
             </includes>
             <outputDirectory>datax</outputDirectory>
         </fileSet>
-        <fileSet>
+        <!--<fileSet>
             <directory>drdsreader/target/datax/</directory>
             <includes>
                 <include>**/*.*</include>
             </includes>
             <outputDirectory>datax</outputDirectory>
-        </fileSet>
+        </fileSet>-->
         <fileSet>
             <directory>oraclereader/target/datax/</directory>
             <includes>
@@ -82,27 +82,27 @@
             <outputDirectory>datax</outputDirectory>
         </fileSet>
 
-        <fileSet>
+       <!-- <fileSet>
             <directory>odpsreader/target/datax/</directory>
             <includes>
                 <include>**/*.*</include>
             </includes>
             <outputDirectory>datax</outputDirectory>
-        </fileSet>
-        <fileSet>
+        </fileSet>-->
+        <!--<fileSet>
             <directory>otsreader/target/datax/</directory>
             <includes>
                 <include>**/*.*</include>
             </includes>
             <outputDirectory>datax</outputDirectory>
-        </fileSet>
-		<fileSet>
+        </fileSet>-->
+		<!--<fileSet>
              <directory>otsstreamreader/target/datax/</directory>
              <includes>
                  <include>**/*.*</include>
              </includes>
              <outputDirectory>datax</outputDirectory>
-         </fileSet>
+         </fileSet>-->
         <fileSet>
             <directory>txtfilereader/target/datax/</directory>
             <includes>
@@ -117,13 +117,13 @@
             </includes>
             <outputDirectory>datax</outputDirectory>
         </fileSet>
-        <fileSet>
+        <!--<fileSet>
             <directory>ossreader/target/datax/</directory>
             <includes>
                 <include>**/*.*</include>
             </includes>
             <outputDirectory>datax</outputDirectory>
-        </fileSet>
+        </fileSet>-->
         <fileSet>
             <directory>mongodbreader/target/datax/</directory>
             <includes>
@@ -182,20 +182,20 @@
             </includes>
             <outputDirectory>datax</outputDirectory>
         </fileSet>
-        <fileSet>
+        <!--<fileSet>
             <directory>drdswriter/target/datax/</directory>
             <includes>
                 <include>**/*.*</include>
             </includes>
             <outputDirectory>datax</outputDirectory>
-        </fileSet>
-        <fileSet>
+        </fileSet>-->
+       <!-- <fileSet>
             <directory>odpswriter/target/datax/</directory>
             <includes>
                 <include>**/*.*</include>
             </includes>
             <outputDirectory>datax</outputDirectory>
-        </fileSet>
+        </fileSet>-->
         <fileSet>
             <directory>txtfilewriter/target/datax/</directory>
             <includes>
@@ -210,20 +210,20 @@
             </includes>
             <outputDirectory>datax</outputDirectory>
         </fileSet>
-        <fileSet>
+        <!--<fileSet>
             <directory>osswriter/target/datax/</directory>
             <includes>
                 <include>**/*.*</include>
             </includes>
             <outputDirectory>datax</outputDirectory>
-        </fileSet>
-        <fileSet>
+        </fileSet>-->
+       <!-- <fileSet>
             <directory>adswriter/target/datax/</directory>
             <includes>
                 <include>**/*.*</include>
             </includes>
             <outputDirectory>datax</outputDirectory>
-        </fileSet>
+        </fileSet>-->
         <fileSet>
             <directory>streamwriter/target/datax/</directory>
             <includes>
@@ -231,13 +231,13 @@
             </includes>
             <outputDirectory>datax</outputDirectory>
         </fileSet>
-        <fileSet>
+        <!--<fileSet>
             <directory>otswriter/target/datax/</directory>
             <includes>
                 <include>**/*.*</include>
             </includes>
             <outputDirectory>datax</outputDirectory>
-        </fileSet>
+        </fileSet>-->
         <fileSet>
             <directory>mongodbwriter/target/datax/</directory>
             <includes>
@@ -301,13 +301,13 @@
             </includes>
             <outputDirectory>datax</outputDirectory>
         </fileSet>
-        <fileSet>
+        <!--<fileSet>
             <directory>ocswriter/target/datax/</directory>
             <includes>
                 <include>**/*.*</include>
             </includes>
             <outputDirectory>datax</outputDirectory>
-        </fileSet>
+        </fileSet>-->
         <fileSet>
             <directory>tairwriter/target/datax/</directory>
             <includes>
