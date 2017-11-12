@@ -10,10 +10,13 @@ import com.alibaba.datax.plugin.rdbms.writer.Key;
 import com.alibaba.datax.plugin.rdbms.writer.util.WriterUtil;
 import com.alibaba.datax.plugin.writer.logrecorder.util.ConfigParser;
 import com.alibaba.datax.plugin.writer.logrecorder.util.container.CoreConstant;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import sun.security.krb5.Config;
 import org.apache.commons.io.IOUtils;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.sql.Connection;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -23,6 +26,8 @@ import java.util.List;
 
 //TODO writeProxy
 public final class LogRecorder {
+    private static final Logger LOG = LoggerFactory.getLogger(LogRecorder.class);
+
     private static DataBaseType DATABASE_TYPE = DataBaseType.MySql;
 
     private CommonRdbmsWriter.Job commonRdbmsWriterJob;
@@ -39,13 +44,11 @@ public final class LogRecorder {
         String value = sdf.format(new Date())+"beijing";
         renderedPreSqls.add("insert INTO sys_user VALUES('1','chenyuqg','male','"+value+"')");
 
-        writeData("sys_user",renderedPreSqls);
+        insertExecuLog2DB("sys_user",renderedPreSqls);
 
     }
 
     public static void esembleConf(){
-
-        //Configuration conf = ConfigParser.parse(CoreConstant.DATAX_LOG2DB_PATH);
 
         Configuration conf = ConfigParser.parse("./log2DB.json");
         System.out.println("!!!!!!!!!!!!:"+conf.toString());
@@ -72,35 +75,17 @@ public final class LogRecorder {
 
     }
 
-    public static void writeData(String tableName, List<String> renderedPreSqls){
-        /*String jdbcUrl = "jdbc:mysql://192.168.189.188:3306/test_target";
-        String username = "root";
-        String password = "root";
-        String name = "mysqlwriter";
-        Configuration logDBConf = Configuration.newDefault();
-        logDBConf.set(Key.JDBC_URL,jdbcUrl);
-        logDBConf.set(Key.USERNAME,username);
-        logDBConf.set(Key.PASSWORD,password);
-        logDBConf.set("databaseType",name);*/
-        //上面几行模拟一个由json转化而来的configuration
-
-        //Configuration cf = ConfigParser.parse(CoreConstant.DATAX_LOG2DB_PATH);
-        //Configuration cf = ConfigParser.parseCoreConfig(CoreConstant.DATAX_CONF_PATH);
-        //Configuration cf = Configuration.from(CoreConstant.DATAX_LOG2DB_PATH);
-      /*  Configuration cf2 = Configuration.from(new File("log2DB.json"));
-        System.out.println("************"+cf2.toJSON());
-        cf2.getString("jdbc");*/
-       /* System.out.println("chenyuqg实际路径是2："+new File("../conf/log2DB.json"));
-        try {
-            Configuration cf = Configuration.from(new File("../conf/log2DB.json"));
-            System.out.println("&&&&&&&&&&"+cf.toJSON());
-        }catch (Exception e){
-            Configuration cf = Configuration.from(new File(CoreConstant.DATAX_LOG2DB_PATH));
-            System.out.println("************"+cf.toJSON());
-        }*/
-
+    public static void insertExecuLog2DB(String tableName, List<String> renderedPreSqls){
+        //TODO: 数据库定义文件校验、数据库连通性校验、insert权限校验
         String path = LogRecorder.class.getClassLoader().getResource(".") .getFile();
-        File log2DBParFile = new File(path +"conf"+ File.separator + "log2DB.json");
+
+        File log2DBParFile = null;
+        try{
+            log2DBParFile = new File(path +"conf"+ File.separator + "log2DB.json");
+        }catch (Exception e){
+            LOG.error("Exception when read log2DB file", e);
+        }
+
         Configuration logDBConf = Configuration.from(log2DBParFile);
         System.out.println("修改之后的结果"+logDBConf.toString());
         //Configuration logDBConf = ConfigParser.parse(path +"conf"+ File.separator + "log2DB.json");
@@ -132,13 +117,10 @@ public final class LogRecorder {
         //在这个configuration中加入自定义的变量和值
         logDBConf.set("batchSize","2048");
         logDBConf.set(Key.TABLE,tableName);
-        System.out.println("准备获取conn");
         Connection conn = DBUtil.getConnection(DATABASE_TYPE,logDBConf.getString(Key.JDBC_URL),logDBConf.getString(Key.USERNAME),logDBConf.getString(Key.PASSWORD));
-        System.out.println("准备执行sql");
         WriterUtil.executeSqls(conn, renderedPreSqls, logDBConf.getString(Key.JDBC_URL), DATABASE_TYPE);
-        System.out.println("准备关闭资源");
         DBUtil.closeDBResources(null, null, conn);
-        System.out.println("关闭连接");
+        LOG.info("Log information inserted successfully.");
 
     }
 

@@ -107,7 +107,7 @@ public class JobContainer extends AbstractContainer {
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm.SSS");
         String value = sdf.format(new Date())+"beijing";
         renderedPreSqls.add("insert INTO sys_user VALUES('1','DataX jobContainer starts job.','male','"+value+"')");
-        LogRecorder.writeData("sys_user",renderedPreSqls);
+        LogRecorder.insertExecuLog2DB("sys_user",renderedPreSqls);
         LOG.info("cehnyuqg:陈玉强修改部分结束...");
 
 
