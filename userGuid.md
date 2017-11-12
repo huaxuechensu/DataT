@@ -75,8 +75,8 @@ DataX本身作为数据同步框架，将不同数据源的同步抽象为从源
     ``` shell
     $ cd  {YOUR_DATAX_HOME}/bin
     $  python datax.py -r streamreader -w streamwriter
-    DataX (UNKNOWN_DATAX_VERSION), From Alibaba !
-    Copyright (C) 2010-2015, Alibaba Group. All Rights Reserved.
+    DataX (UNKNOWN_DATAX_VERSION), From H3C !
+    Copyright (C) 2015-2017 H3C Holding Limited and/or its affiliates and licensors. All rights reserved.
     Please refer to the streamreader document:
         https://github.com/alibaba/DataX/blob/master/streamreader/doc/streamreader.md 
     

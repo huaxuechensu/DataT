@@ -92,8 +92,8 @@ warn: test write performance will write data into your table, you can use a temp
 def printCopyright():
     DATAX_VERSION = 'UNKNOWN_DATAX_VERSION'
     print '''
-DataX Util Tools (%s), From Alibaba !
-Copyright (C) 2010-2016, Alibaba Group. All Rights Reserved.''' % DATAX_VERSION
+DataX Util Tools (%s), From H3C !
+Copyright (C) 2015-2017 H3C Holding Limited and/or its affiliates and licensors. All rights reserved.''' % DATAX_VERSION
     sys.stdout.flush()
 
 
