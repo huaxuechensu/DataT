@@ -27,6 +27,9 @@ import com.alibaba.datax.core.util.container.ClassLoaderSwapper;
 import com.alibaba.datax.core.util.container.CoreConstant;
 import com.alibaba.datax.core.util.container.LoadUtil;
 import com.alibaba.datax.dataxservice.face.domain.enums.ExecuteMode;
+import com.alibaba.datax.plugin.rdbms.writer.CommonRdbmsWriter;
+import com.alibaba.datax.plugin.rdbms.writer.Key;
+import com.alibaba.datax.plugin.writer.logrecorder.LogRecorder;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
@@ -35,7 +38,9 @@ import org.slf4j.LoggerFactory;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
+import java.util.logging.LogRecord;
 
 /**
  * Created by jingxing on 14-8-24.
@@ -95,6 +100,16 @@ public class JobContainer extends AbstractContainer {
     @Override
     public void start() {
         LOG.info("DataX jobContainer starts job.");
+
+        LOG.info("chenyuqg:陈玉强修改部分开始...");
+        //LogRecorder.test(configuration);
+        List<String> renderedPreSqls = new ArrayList<String>();
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm.SSS");
+        String value = sdf.format(new Date())+"beijing";
+        renderedPreSqls.add("insert INTO sys_user VALUES('1','DataX jobContainer starts job.','male','"+value+"')");
+        LogRecorder.writeData("sys_user",renderedPreSqls);
+        LOG.info("cehnyuqg:陈玉强修改部分结束...");
+
 
         boolean hasException = false;
         boolean isDryRun = false;

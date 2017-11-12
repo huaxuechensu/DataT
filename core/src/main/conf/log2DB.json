@@ -1,0 +1,6 @@
+{
+  "name": "mysqlwriter",
+  "jdbcUrl": "jdbc:mysql://192.168.189.188:3306/test_target",
+  "password": "root",
+  "username": "root"
+}
