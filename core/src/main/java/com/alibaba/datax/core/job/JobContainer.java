@@ -27,9 +27,15 @@ import com.alibaba.datax.core.util.container.ClassLoaderSwapper;
 import com.alibaba.datax.core.util.container.CoreConstant;
 import com.alibaba.datax.core.util.container.LoadUtil;
 import com.alibaba.datax.dataxservice.face.domain.enums.ExecuteMode;
+import com.alibaba.datax.plugin.rdbms.util.DBUtil;
+import com.alibaba.datax.plugin.rdbms.util.DataBaseType;
+import com.alibaba.datax.plugin.rdbms.util.JdbcConnectionFactory;
 import com.alibaba.datax.plugin.rdbms.writer.CommonRdbmsWriter;
+import com.alibaba.datax.plugin.rdbms.writer.Constant;
 import com.alibaba.datax.plugin.rdbms.writer.Key;
 import com.alibaba.datax.plugin.writer.logrecorder.LogRecorder;
+import com.alibaba.datax.plugin.writer.logrecorder.util.MD5Util;
+import com.alibaba.datax.plugin.writer.logrecorder.util.MatchDatabaseTypeUtil;
 import com.alibaba.fastjson.JSON;
 import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.Validate;
@@ -85,6 +91,15 @@ public class JobContainer extends AbstractContainer {
 
     private int totalStage = 1;
 
+    private int definedSplitChannels = 0;
+    private String definedSplitReaderType = "";
+    private int definedSplitReaderTask = 0;
+    private String definedSplitWriteType = "";
+    private int definedSplitWriteTask = 0;
+    private int definedScheduleTaskGroups = 0;
+    private String definedScheduleRuningMode = "";
+
+
     private ErrorRecordChecker errorLimit;
 
     public JobContainer(Configuration configuration) {
@@ -100,16 +115,7 @@ public class JobContainer extends AbstractContainer {
     @Override
     public void start() {
         LOG.info("DataX jobContainer starts job.");
-
-        LOG.info("chenyuqg:陈玉强修改部分开始...");
-        //LogRecorder.test(configuration);
-        List<String> renderedPreSqls = new ArrayList<String>();
-        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm.SSS");
-        String value = sdf.format(new Date())+"beijing";
-        renderedPreSqls.add("insert INTO sys_user VALUES('1','DataX jobContainer starts job.','male','"+value+"')");
-        LogRecorder.insertExecuLog2DB("sys_user",renderedPreSqls);
-        LOG.info("cehnyuqg:陈玉强修改部分结束...");
-
+        LOG.info("测试父类中自定义的JobId是："+super.getDefinedJobId());
 
         boolean hasException = false;
         boolean isDryRun = false;
@@ -121,10 +127,11 @@ public class JobContainer extends AbstractContainer {
                 this.preCheck();
             } else {
                 userConf = configuration.clone();
-                LOG.debug("jobContainer starts to do preHandle ...");
+                LOG.info("jobContainer starts to do preHandle ...");
+                //预处理没啥内容
                 this.preHandle();
 
-                LOG.debug("jobContainer starts to do init ...");
+                LOG.info("jobContainer starts to do init ...");
                 this.init();
                 LOG.info("jobContainer starts to do prepare ...");
                 this.prepare();
@@ -132,12 +139,19 @@ public class JobContainer extends AbstractContainer {
                 this.totalStage = this.split();
                 LOG.info("jobContainer starts to do schedule ...");
                 this.schedule();
-                LOG.debug("jobContainer starts to do post ...");
+
+                //added by chenyuqg
+                this.insertRuningLog();
+
+                LOG.info("jobContainer starts to do post ...");
                 this.post();
 
-                LOG.debug("jobContainer starts to do postHandle ...");
+                LOG.info("jobContainer starts to do postHandle ...");
                 this.postHandle();
                 LOG.info("DataX jobId [{}] completed successfully.", this.jobId);
+
+                //added by chenyuqg
+                this.insertFinishLog();
 
                 this.invokeHooks();
             }
@@ -191,6 +205,7 @@ public class JobContainer extends AbstractContainer {
 
                     LOG.info(PerfTrace.getInstance().summarizeNoException());
                     this.logStatistics();
+
                 }
             }
         }
@@ -314,9 +329,16 @@ public class JobContainer extends AbstractContainer {
 
         JobPluginCollector jobPluginCollector = new DefaultJobPluginCollector(
                 this.getContainerCommunicator());
+
+        //added by chenyuqg
+        this.insertInitLog();
+
         //必须先Reader ，后Writer
         this.jobReader = this.initJobReader(jobPluginCollector);
         this.jobWriter = this.initJobWriter(jobPluginCollector);
+
+        //added by chenyuqg
+        this.insertTableColumInfo(this.configuration);
     }
 
     private void prepare() {
@@ -491,7 +513,7 @@ public class JobContainer extends AbstractContainer {
 
             LOG.info("Job set Channel-Number to " + this.needChannelNumber
                     + " channels.");
-
+            definedSplitChannels = this.needChannelNumber;
             return;
         }
 
@@ -524,7 +546,7 @@ public class JobContainer extends AbstractContainer {
                 this.needChannelNumber, channelsPerTaskGroup);
 
         LOG.info("Scheduler starts [{}] taskGroups.", taskGroupConfigs.size());
-
+        definedScheduleTaskGroups = taskGroupConfigs.size();
         ExecuteMode executeMode = null;
         AbstractScheduler scheduler;
         try {
@@ -544,6 +566,7 @@ public class JobContainer extends AbstractContainer {
             }
 
             LOG.info("Running by {} Mode.", executeMode);
+            definedScheduleRuningMode = executeMode.getValue();
 
             this.startTransferTimeStamp = System.currentTimeMillis();
 
@@ -618,6 +641,15 @@ public class JobContainer extends AbstractContainer {
 
         super.getContainerCommunicator().report(reportCommunication);
 
+        //-----------------------下面部分为后期添加，作用：把执行日志写入日志数据库------------------
+        String timeStr = MD5Util.getCurrentTime();
+        List<String> renderedPreSqls = new ArrayList<String>();
+        String executeSqlStr = "INSERT INTO job_complete_info(jei_entry_id,jci_starttime_stamp,jci_endtime_stamp,jci_time_consuming,jci_bytespeed_persecond,jci_recordspeed_persecond,jci_read_succeed_record,jci_read_succeed_bytes,jci_write_error_record,jci_insert_time) VALUES  ('"
+                +super.getDefinedJobId()+"','"+startTimeStamp+"','"+endTimeStamp+"','"+totalCosts+"','"+StrUtil.stringify(byteSpeedPerSecond)+"','"+String.valueOf(recordSpeedPerSecond)+"','"
+                +communication.getLongCounter(CommunicationTool.READ_SUCCEED_RECORDS)+"','"+communication.getLongCounter(CommunicationTool.READ_SUCCEED_BYTES)+"','"+CommunicationTool.getTotalErrorRecords(communication)+"','"+timeStr+"')";
+        renderedPreSqls.add(executeSqlStr);
+        LogRecorder.insertExecuLog2DB("job_complete_info",renderedPreSqls);
+        //-----------------------上面部分为后期添加，作用：把执行日志写入日志数据库------------------
 
         LOG.info(String.format(
                 "\n" + "%-26s: %-18s\n" + "%-26s: %-18s\n" + "%-26s: %19s\n"
@@ -753,6 +785,10 @@ public class JobContainer extends AbstractContainer {
         }
         LOG.info("DataX Reader.Job [{}] splits to [{}] tasks.",
                 this.readerPluginName, readerSlicesConfigs.size());
+        definedSplitReaderType = this.readerPluginName;
+        definedSplitReaderTask = readerSlicesConfigs.size();
+
+
         classLoaderSwapper.restoreCurrentThreadClassLoader();
         return readerSlicesConfigs;
     }
@@ -770,6 +806,9 @@ public class JobContainer extends AbstractContainer {
         }
         LOG.info("DataX Writer.Job [{}] splits to [{}] tasks.",
                 this.writerPluginName, writerSlicesConfigs.size());
+        definedSplitWriteType = this.writerPluginName;
+        definedSplitWriteTask = writerSlicesConfigs.size();
+
         classLoaderSwapper.restoreCurrentThreadClassLoader();
 
         return writerSlicesConfigs;
@@ -988,4 +1027,69 @@ public class JobContainer extends AbstractContainer {
         HookInvoker invoker = new HookInvoker(CoreConstant.DATAX_HOME + "/hook", configuration, comm.getCounter());
         invoker.invokeAll();
     }
+
+    private void insertTableColumInfo(Configuration originalConfig){
+        String sourceJdbcUrl = originalConfig.getString("job.content[0].reader.parameter.connection[0].jdbcUrl[0]");
+        String sourceUsername = originalConfig.getString("job.content[0].reader.parameter.username");
+        String sourcePassword = originalConfig.getString("job.content[0].reader.parameter.password");
+        String sourceOneTable = originalConfig.getString("job.content[0].reader.parameter.connection[0].table[0]");
+        String sourceWhereStr = originalConfig.getString("job.content[0].reader.parameter.where");
+        String sourceName = originalConfig.getString("job.content[0].reader.name");
+        String sourceQuerySql = originalConfig.getString("job.content[0].reader.parameter.connection[0].querySql");
+
+        String targetJdbcUrl = originalConfig.getString("job.content[0].writer.parameter.connection[0].jdbcUrl");
+        String targetOneTable = originalConfig.getString("job.content[0].writer.parameter.connection[0].table[0]");
+        String targetWriteMode = originalConfig.getString("job.content[0].writer.parameter.writeMode");
+        String targetPreSql = originalConfig.getString("job.content[0].writer.parameter.preSql[0]");
+        String targetName = originalConfig.getString("job.content[0].writer.name");
+
+        DataBaseType dataBaseType = MatchDatabaseTypeUtil.getDatabaseType(sourceName);
+        JdbcConnectionFactory jdbcConnectionFactory = new JdbcConnectionFactory(dataBaseType, sourceJdbcUrl, sourceUsername, sourcePassword);
+
+        boolean isPreCheck = originalConfig.getBool(Key.DRYRUN, false);
+        List<String> allColumns;
+        if (isPreCheck){
+            allColumns = DBUtil.getTableColumnsByConn(dataBaseType,jdbcConnectionFactory.getConnecttionWithoutRetry(), sourceOneTable, jdbcConnectionFactory.getConnectionInfo());
+        }else{
+            allColumns = DBUtil.getTableColumnsByConn(dataBaseType,jdbcConnectionFactory.getConnecttion(), sourceOneTable, jdbcConnectionFactory.getConnectionInfo());
+        }
+
+        String timeStr = MD5Util.getCurrentTime();
+        List<String> renderedPreSqls = new ArrayList<String>();
+        //默认isDryRun是false
+        String executeSqlStr = "INSERT INTO job_transform_info (jei_entry_id,jti_source_jdbcurl,jti_source_dbtype,jti_source_tablename,jti_source_querysql,jti_source_whereval,jti_source_allcolumn,jti_target_jdbcurl,jti_target_dbtype,jti_target_tablename,jti_target_presql,jti_target_writemode,jti_insert_time) VALUES  ('"
+                +super.getDefinedJobId()+"','"+sourceJdbcUrl+"','"+sourceName+"','"+sourceOneTable+"','"+sourceQuerySql+"','"+sourceWhereStr+"','"+allColumns.toString()+"','"+targetJdbcUrl+"','"+targetName+"','"+targetOneTable+"','"+targetPreSql+"','"+targetWriteMode+"','"+timeStr+"')";
+        renderedPreSqls.add(executeSqlStr);
+        LogRecorder.insertExecuLog2DB("job_transform_info",renderedPreSqls);
+    }
+
+    private void  insertInitLog(){
+        String timeStr = MD5Util.getCurrentTime();
+        List<String> renderedPreSqls = new ArrayList<String>();
+        //既然走到这个init中，isDryRun就肯定都是false
+        String executeSqlStr = "INSERT INTO job_run_info(jei_entry_id,jri_isdryrun,jri_jobid,jri_threadname,jri_status,jri_start_time) VALUES ('"+super.getDefinedJobId()+"','"+false+"','"+this.jobId+"','"+Thread.currentThread().getName()+"','"+"init"+"','"+timeStr+"')";
+        renderedPreSqls.add(executeSqlStr);
+        LogRecorder.insertExecuLog2DB("job_run_info",renderedPreSqls);
+    }
+
+    private void insertRuningLog(){
+        String timeStr = MD5Util.getCurrentTime();
+        List<String> renderedPreSqls = new ArrayList<String>();
+        String executeSqlStr = "INSERT INTO job_run_info(jei_entry_id,jri_jobid,jri_threadname,jri_status,jri_spilt_channels,jri_spilt_reader_type,jri_spilt_reader_task,jri_spilt_write_type,jri_spilt_write_task,jri_schedule_taskgroups,jri_schedule_runingmode) VALUES ('"
+                +super.getDefinedJobId()+"','"+this.jobId+"','"+Thread.currentThread().getName()+"','"+"runing"+"','"+definedSplitChannels+"','"+definedSplitReaderType+"','"+definedSplitReaderTask+"','"+definedSplitWriteType+"','"+definedSplitWriteTask+"','"+definedScheduleTaskGroups+"','"+definedScheduleRuningMode+"')";
+        renderedPreSqls.add(executeSqlStr);
+        LogRecorder.insertExecuLog2DB("job_run_info",renderedPreSqls);
+    }
+
+    private void insertFinishLog(){
+        String timeStr = MD5Util.getCurrentTime();
+        List<String> renderedPreSqls = new ArrayList<String>();
+        String executeSqlStr = "INSERT INTO job_run_info(jei_entry_id,jri_jobid,jri_threadname,jri_status,jri_end_time) VALUES ('"
+                +super.getDefinedJobId()+"','"+this.jobId+"','"+Thread.currentThread().getName()+"','"+"finished"+"','"+timeStr+"')";
+        //System.out.println("chenyuqg: finish的执行语句是"+executeSqlStr);
+        renderedPreSqls.add(executeSqlStr);
+        LogRecorder.insertExecuLog2DB("job_run_info",renderedPreSqls);
+    }
+
+
 }
