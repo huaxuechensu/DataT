@@ -296,7 +296,7 @@ public class TaskGroupContainer extends AbstractContainer {
             }
         }
     }
-    
+
     private Map<Integer, Configuration> buildTaskConfigMap(List<Configuration> configurations){
     	Map<Integer, Configuration> map = new HashMap<Integer, Configuration>();
     	for(Configuration taskConfig : configurations){

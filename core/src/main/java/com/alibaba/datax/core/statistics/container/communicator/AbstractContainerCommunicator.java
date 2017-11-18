@@ -19,9 +19,10 @@ public abstract class AbstractContainerCommunicator {
 
     private Long jobId;
 
+    private String userDefinedJobId;
+
     private VMInfo vmInfo = VMInfo.getVmInfo();
     private long lastReportTime = System.currentTimeMillis();
-
 
     public Configuration getConfiguration() {
         return this.configuration;
@@ -43,8 +44,18 @@ public abstract class AbstractContainerCommunicator {
         this.reporter = reporter;
     }
 
+
+
     public Long getJobId() {
         return jobId;
+    }
+
+    public String getUserDefinedJobId() {
+        return userDefinedJobId;
+    }
+
+    public void setUserDefinedJobId(String userDefinedJobId) {
+        this.userDefinedJobId = userDefinedJobId;
     }
 
     public AbstractContainerCommunicator(Configuration configuration) {

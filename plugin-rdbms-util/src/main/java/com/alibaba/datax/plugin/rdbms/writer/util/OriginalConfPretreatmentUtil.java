@@ -28,6 +28,8 @@ public final class OriginalConfPretreatmentUtil {
         originalConfig.getNecessaryValue(Key.USERNAME, DBUtilErrorCode.REQUIRED_VALUE);
         originalConfig.getNecessaryValue(Key.PASSWORD, DBUtilErrorCode.REQUIRED_VALUE);
 
+
+        System.out.println("chenyuqg 31:"+originalConfig.toString());
         doCheckBatchSize(originalConfig);
 
         simplifyConf(originalConfig);
@@ -93,6 +95,7 @@ public final class OriginalConfPretreatmentUtil {
 
     public static void dealColumnConf(Configuration originalConfig, ConnectionFactory connectionFactory, String oneTable) {
         List<String> userConfiguredColumns = originalConfig.getList(Key.COLUMN, String.class);
+        System.out.println("chenyuqg 96hang:"+originalConfig.toString());
         if (null == userConfiguredColumns || userConfiguredColumns.isEmpty()) {
             throw DataXException.asDataXException(DBUtilErrorCode.ILLEGAL_VALUE,
                     "您的配置文件中的列配置信息有误. 因为您未配置写入数据库表的列名称，DataX获取不到列信息. 请检查您的配置并作出修改.");
@@ -107,6 +110,7 @@ public final class OriginalConfPretreatmentUtil {
 
             LOG.info("table:[{}] all columns:[\n{}\n].", oneTable,
                     StringUtils.join(allColumns, ","));
+            LOG.info("Chenyuqg :table:[{}] all columns");
 
             if (1 == userConfiguredColumns.size() && "*".equals(userConfiguredColumns.get(0))) {
                 LOG.warn("您的配置文件中的列配置信息存在风险. 因为您配置的写入数据库表的列为*，当您的表字段个数、类型有变动时，可能影响任务正确性甚至会运行出错。请检查您的配置并作出修改.");
@@ -163,7 +167,7 @@ public final class OriginalConfPretreatmentUtil {
         String writeDataSqlTemplate = WriterUtil.getWriteTemplate(columns, valueHolders, writeMode,dataBaseType, forceUseUpdate);
 
         LOG.info("Write data [\n{}\n], which jdbcUrl like:[{}]", writeDataSqlTemplate, jdbcUrl);
-
+        LOG.info("Chenyuqg Write data  which jdbcUrl like:");
         originalConfig.set(Constant.INSERT_OR_REPLACE_TEMPLATE_MARK, writeDataSqlTemplate);
     }
 

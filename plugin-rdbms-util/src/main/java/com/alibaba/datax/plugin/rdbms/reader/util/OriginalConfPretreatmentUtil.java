@@ -100,6 +100,7 @@ public final class OriginalConfPretreatmentUtil {
                     i, Key.JDBC_URL), jdbcUrl);
 
             LOG.info("Available jdbcUrl:{}.",jdbcUrl);
+            LOG.info("Chenyuqg Available jdbcUrl:{}.",jdbcUrl);
 
             if (isTableMode) {
                 // table 方式

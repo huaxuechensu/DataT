@@ -9,6 +9,7 @@ import com.alibaba.datax.plugin.rdbms.writer.CommonRdbmsWriter;
 import com.alibaba.datax.plugin.rdbms.writer.Key;
 import com.alibaba.datax.plugin.rdbms.writer.util.WriterUtil;
 import com.alibaba.datax.plugin.writer.logrecorder.util.ConfigParser;
+import com.alibaba.datax.plugin.writer.logrecorder.util.MatchDatabaseTypeUtil;
 import com.alibaba.datax.plugin.writer.logrecorder.util.container.CoreConstant;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -87,32 +88,10 @@ public final class LogRecorder {
         }
 
         Configuration logDBConf = Configuration.from(log2DBParFile);
-        System.out.println("修改之后的结果"+logDBConf.toString());
-        //Configuration logDBConf = ConfigParser.parse(path +"conf"+ File.separator + "log2DB.json");
 
         //根据JSON配置，匹配合适的数据库类型
         String dbType = logDBConf.getString("name");
-        System.out.println("修改之后的dbType结果"+dbType);
-        switch (dbType){
-            default:
-                DATABASE_TYPE = DataBaseType.MySql;
-                break;
-            case "mysqlwriter":
-                DATABASE_TYPE = DataBaseType.MySql;
-                break;
-            case "oraclewriter":
-                DATABASE_TYPE = DataBaseType.Oracle;
-                break;
-            case "postgresqlwriter":
-                DATABASE_TYPE = DataBaseType.PostgreSQL;
-                break;
-            case "sqlserverwriter":
-                DATABASE_TYPE = DataBaseType.SQLServer;
-                break;
-            case "rdbmswriter":
-                DATABASE_TYPE = DataBaseType.RDBMS;
-                break;
-        }
+        DATABASE_TYPE = MatchDatabaseTypeUtil.getDatabaseType(dbType);
 
         //在这个configuration中加入自定义的变量和值
         logDBConf.set("batchSize","2048");

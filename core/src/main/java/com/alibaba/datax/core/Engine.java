@@ -14,6 +14,8 @@ import com.alibaba.datax.core.util.ExceptionTracker;
 import com.alibaba.datax.core.util.FrameworkErrorCode;
 import com.alibaba.datax.core.util.container.CoreConstant;
 import com.alibaba.datax.core.util.container.LoadUtil;
+import com.alibaba.datax.plugin.writer.logrecorder.LogRecorder;
+import com.alibaba.datax.plugin.writer.logrecorder.util.MD5Util;
 import org.apache.commons.cli.BasicParser;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
@@ -21,9 +23,8 @@ import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.text.SimpleDateFormat;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -36,7 +37,7 @@ public class Engine {
     private static String RUNTIME_MODE;
 
     /* check job model (job/task) first */
-    public void start(Configuration allConf) {
+    public void start(Configuration allConf,String serialNum) {
 
         // 绑定column转换信息
         ColumnCast.bind(allConf);
@@ -89,8 +90,19 @@ public class Engine {
         //初始化PerfTrace
         PerfTrace perfTrace = PerfTrace.getInstance(isJob, instanceId, taskGroupId, priority, traceEnable);
         perfTrace.setJobInfo(jobInfoConfig,perfReportEnable,channelNumber);
-        container.start();
 
+        //-----------------------下面部分为后期添加，作用：把执行日志写入日志数据库------------------
+        String timeStr = MD5Util.getCurrentTime();
+        List<String> renderedPreSqls = new ArrayList<String>();
+        String executeSqlStr = "INSERT INTO job_start_info VALUES ('"+serialNum+"','"+isJob+"','"+channelNumber+"','"+instanceId+"','"+taskGroupId+"','"+priority+"','"+traceEnable+"','"+perfReportEnable+"','"+timeStr+"')";
+        renderedPreSqls.add(executeSqlStr);
+        LogRecorder.insertExecuLog2DB("job_start_info",renderedPreSqls);
+
+        //传递Job最开始的序列号
+        container.setDefinedJobId(serialNum);
+        //-----------------------上面部分为后期添加，作用：把执行日志写入日志数据库------------------
+
+        container.start();
     }
 
 
@@ -167,8 +179,20 @@ public class Engine {
         LOG.debug(configuration.toJSON());
 
         ConfigurationValidate.doValidate(configuration);
+
+
+        //-----------------------下面部分为后期添加，作用：把执行日志写入日志数据库------------------
+        String serialNum = MD5Util.getTime5RanNum();
+        String timeStr = MD5Util.getCurrentTime();
+        String confStr = configuration.toJSON();
+        List<String> renderedPreSqls = new ArrayList<String>();
+        String executeSqlStr = "INSERT INTO job_entry_info VALUES ('"+serialNum+"','"+jobId+"','"+jobPath+"','"+RUNTIME_MODE+"','"+confStr+"','"+timeStr+"')";
+        renderedPreSqls.add(executeSqlStr);
+        LogRecorder.insertExecuLog2DB("job_entry_info",renderedPreSqls);
+        //-----------------------上面部分为后期添加，作用：把执行日志写入日志数据库------------------
+
         Engine engine = new Engine();
-        engine.start(configuration);
+        engine.start(configuration,serialNum);
     }
 
 
@@ -200,6 +224,12 @@ public class Engine {
 
     public static void main(String[] args) throws Exception {
         int exitCode = 0;
+       /*  Test
+        String[] test = new String[]{"-mode","standalone","-jobid","-1","-job","C:\\Users\\YQ\\Documents\\mysql2mysql.json"};
+        args = test;
+        String test = "{\"common\":{\"column\":{\"dateFormat\":\"yyyy-MM-dd\",\"datetimeFormat\":\"yyyy-MM-dd HH:mm:ss\",\"encoding\":\"utf-8\",\"extraFormats\":[\"yyyyMMdd\"],\"timeFormat\":\"HH:mm:ss\",\"timeZone\":\"GMT+8\"}},\"core\":{\"container\":{\"job\":{\"id\":0,\"mode\":\"standalone\",\"reportInterval\":10000},\"taskGroup\":{\"channel\":5},\"trace\":{\"enable\":\"false\"}},\"dataXServer\":{\"address\":\"http://localhost:7001/api\",\"reportDataxLog\":false,\"reportPerfLog\":false,\"timeout\":10000},\"statistics\":{\"collector\":{\"plugin\":{\"maxDirtyNumber\":10,\"taskClass\":\"com.alibaba.datax.core.statistics.plugin.task.StdoutPluginCollector\"}}},\"transport\":{\"channel\":{\"byteCapacity\":67108864,\"capacity\":512,\"class\":\"com.alibaba.datax.core.transport.channel.memory.MemoryChannel\",\"flowControlInterval\":20,\"speed\":{\"byte\":-1,\"record\":-1}},\"exchanger\":{\"bufferSize\":32,\"class\":\"com.alibaba.datax.core.plugin.BufferedRecordExchanger\"}}},\"entry\":{\"jvm\":\"-Xms1G -Xmx1G\"},\"job\":{\"content\":[{\"reader\":{\"name\":\"mysqlreader\",\"parameter\":{\"column\":[\"*\"],\"connection\":[{\"jdbcUrl\":[\"jdbc:mysql://192.168.189.188:3306/test_source\"],\"table\":[\"web_sales\"]}],\"password\":\"root\",\"username\":\"root\",\"where\":\"\"}},\"writer\":{\"name\":\"mysqlwriter\",\"parameter\":{\"column\":[\"*\"],\"connection\":[{\"jdbcUrl\":\"jdbc:mysql://192.168.189.188:3306/test_target\",\"table\":[\"web_sales\"]}],\"password\":\"root\",\"preSql\":[],\"session\":[],\"username\":\"root\",\"writeMode\":\"update\"}}}],\"setting\":{\"speed\":{\"channel\":\"10\"}}},\"plugin\":{\"reader\":{\"mysqlreader\":{\"class\":\"com.alibaba.datax.plugin.reader.mysqlreader.MysqlReader\",\"description\":\"useScene: prod. mechanism: Jdbc connection using the database, execute select sql, retrieve data from the ResultSet. warn: The more you know about the database, the less problems you encounter.\",\"developer\":\"alibaba\",\"name\":\"mysqlreader\",\"path\":\"/opt/datax/plugin/reader/mysqlreader\"}},\"writer\":{\"mysqlwriter\":{\"class\":\"com.alibaba.datax.plugin.writer.mysqlwriter.MysqlWriter\",\"description\":\"useScene: prod. mechanism: Jdbc connection using the database, execute insert sql. warn: The more you know about the database, the less problems you encounter.\",\"developer\":\"alibaba\",\"name\":\"mysqlwriter\",\"path\":\"/opt/datax/plugin/writer/mysqlwriter\"}}}}";
+        */
+
         try {
             Engine.entry(args);
         } catch (Throwable e) {

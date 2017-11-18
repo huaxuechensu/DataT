@@ -12,6 +12,8 @@ public abstract class AbstractContainer {
 
     protected AbstractContainerCommunicator containerCommunicator;
 
+    protected String definedJobId;
+
     public AbstractContainer(Configuration configuration) {
         Validate.notNull(configuration, "Configuration can not be null.");
 
@@ -28,6 +30,14 @@ public abstract class AbstractContainer {
 
     public void setContainerCommunicator(AbstractContainerCommunicator containerCommunicator) {
         this.containerCommunicator = containerCommunicator;
+    }
+
+    public String getDefinedJobId() {
+        return definedJobId;
+    }
+
+    public void setDefinedJobId(String definedJobId) {
+        this.definedJobId = definedJobId;
     }
 
     public abstract void start();
